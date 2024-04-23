@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+import matplotlib.pyplot as plt
 
 OVER_ID = 'over_9.5'
 UNDER_ID = 'under_9.5'
@@ -19,23 +20,43 @@ def load_data(sim_name):
     prices_df['under_true'] = 1.0 - prices_df['over_true']
     return orders_df, prices_df
 
-# plot data using Altair
-def plot_data(df, x, y, color):
-    chart = alt.Chart(df).mark_point().encode(
-        x=x,
-        y=y,
-        color=color,
-        tooltip=list(df.columns)
-    ).interactive().properties(
-        width=800,
-        height=400
-    )
-    return chart
+# plot cumulative bet amount
+def plot_cumulative_bets(df):
+    plt.figure(figsize=(10, 5))
+    grouped = df.groupby('sim_num')['bet_amount'].sum().cumsum()
+    plt.plot(grouped)
+    plt.title("Cumulative Bet Amounts by Simulation")
+    plt.xlabel("Simulation Number")
+    plt.ylabel("Cumulative Bet Amount")
+    plt.grid(True)
+    return plt
+
+# plot P&L
+def plot_pnl(df):
+    plt.figure(figsize=(10, 5))
+    pnl_data = df.groupby('sim_num')['pnl'].sum()
+    plt.bar(pnl_data.index, pnl_data.values)
+    plt.title("Profit and Loss by Simulation")
+    plt.xlabel("Simulation Number")
+    plt.ylabel("P&L")
+    plt.grid(True)
+    return plt
+
+# plot Hold %
+def plot_holds(df):
+    plt.figure(figsize=(10, 5))
+    holds = df.groupby('sim_num').apply(lambda x: 100 * x.pnl.sum() / x.bet_amount.sum())
+    plt.plot(holds.index, holds.values)
+    plt.title("Hold Percentage by Simulation")
+    plt.xlabel("Simulation Number")
+    plt.ylabel("Hold %")
+    plt.grid(True)
+    return plt
 
 def main():
     st.title("Market Simulation Analysis")
 
-    # sidebar
+    # Sidebar 
     st.sidebar.header("Configuration")
     sim_name = st.sidebar.selectbox("Select Simulation", [
         'baseline_no_mm_low_vig', 'baseline_no_mm', 'baseline_no_mm_more_buys', 
@@ -44,6 +65,7 @@ def main():
 
     orders_df, prices_df = load_data(sim_name)
 
+    # display orders and prices DataFrames
     if st.sidebar.checkbox("Show DataFrames"):
         st.subheader("Orders DataFrame")
         st.write(orders_df)
@@ -51,19 +73,17 @@ def main():
         st.write(prices_df)
 
     st.sidebar.subheader("Plots")
-    if st.sidebar.checkbox("Plot Bet Amounts"):
-        bet_amount_df = orders_df.groupby('sim_num').bet_amount.sum().reset_index()
-        st.altair_chart(plot_data(bet_amount_df, 'sim_num', 'bet_amount', 'sim_num'), use_container_width=True)
+    if st.sidebar.checkbox("Plot Cumulative Bets"):
+        fig = plot_cumulative_bets(orders_df)
+        st.pyplot(fig)
 
     if st.sidebar.checkbox("Plot P&L"):
-        pnl_df = orders_df.groupby('sim_num').pnl.sum().reset_index()
-        st.altair_chart(plot_data(pnl_df, 'sim_num', 'pnl', 'sim_num'), use_container_width=True)
+        fig = plot_pnl(orders_df)
+        st.pyplot(fig)
 
     if st.sidebar.checkbox("Plot Holds"):
-        holds_df = orders_df.groupby('sim_num').apply(
-            lambda df: 100 * df.pnl.sum() / df.bet_amount.sum()
-        ).reset_index(name='hold_percentage')
-        st.altair_chart(plot_data(holds_df, 'sim_num', 'hold_percentage', 'sim_num'), use_container_width=True)
+        fig = plot_holds(orders_df)
+        st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
