@@ -18,6 +18,28 @@ def load_data(sim_name):
     
     prices_df = pd.read_csv(prices_path)
     prices_df['under_true'] = 1.0 - prices_df['over_true']
+
+    if 'time_step' not in prices_df.columns:
+        raise ValueError("Missing 'time_step' in prices data.")
+    
+    close_prices = prices_df[prices_df.time_step == prices_df.time_step.max()] \
+                    .set_index('sim_num')[['over_true', 'under_true']]
+    
+    close_prices = close_prices.reset_index().melt(id_vars=['sim_num'], 
+        value_vars=['over_true', 'under_true'], var_name='stock_id', value_name='close_price') \
+        .set_index('sim_num').replace({'over_true': OVER_ID, 'under_true': UNDER_ID})
+
+    orders_df['bet_amount'] = (orders_df['price'] * orders_df['quantity']).astype(int)
+    
+    # Join with close prices to calculate returns and pnl
+    orders_df = orders_df.join(
+        close_prices.reset_index()[['sim_num', 'stock_id', 'close_price']].set_index(['sim_num', 'stock_id']),
+        on=['sim_num', 'stock_id'], rsuffix='_p', how='left'
+    )
+    
+    orders_df['returns'] = (orders_df['price'] - orders_df['close_price']) / orders_df['price']
+    orders_df['pnl'] = orders_df['bet_amount'] * orders_df['returns']
+    
     return orders_df, prices_df
 
 # plot cumulative bet amount
