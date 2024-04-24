@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import altair as alt
 import matplotlib.pyplot as plt
 from simulations_config import simulations_config
 
@@ -43,38 +42,14 @@ def load_data(sim_name):
     
     return orders_df, prices_df
 
-# plot cumulative bet amount
-def plot_cumulative_bets(df):
-    plt.figure(figsize=(10, 5))
-    grouped = df.groupby('sim_num')['bet_amount'].sum().cumsum()
-    plt.plot(grouped)
-    plt.title("Cumulative Bet Amounts by Simulation")
-    plt.xlabel("Simulation Number")
-    plt.ylabel("Cumulative Bet Amount")
-    plt.grid(True)
-    return plt
-
-# plot P&L
-def plot_pnl(df):
-    plt.figure(figsize=(10, 5))
-    pnl_data = df.groupby('sim_num')['pnl'].sum()
-    plt.bar(pnl_data.index, pnl_data.values)
-    plt.title("Profit and Loss by Simulation")
-    plt.xlabel("Simulation Number")
-    plt.ylabel("P&L")
-    plt.grid(True)
-    return plt
-
-# plot Hold %
-def plot_holds(df):
-    plt.figure(figsize=(10, 5))
-    holds = df.groupby('sim_num').apply(lambda x: 100 * x.pnl.sum() / x.bet_amount.sum())
-    plt.plot(holds.index, holds.values)
-    plt.title("Hold Percentage by Simulation")
-    plt.xlabel("Simulation Number")
-    plt.ylabel("Hold %")
-    plt.grid(True)
-    return plt
+def plot_pnl_graphs(orders_data, title):
+    all_paths = orders_summary('pnl', orders_data)
+    fig, ax = plt.subplots(1, 1, figsize=(6, 2))
+    for path in all_paths:
+        ax.plot(path, alpha=0.1, c='b')
+    ax.plot(np.array(all_paths).mean(axis=0), c='r')
+    ax.set_title(f"{title} PnL")
+    return fig
 
 def plot_volume_graphs(orders_data, title):
     all_paths = orders_summary('bet_amount', orders_data)
@@ -88,14 +63,15 @@ def plot_volume_graphs(orders_data, title):
     axs[1].set_title(f"{title} Volume Imbalance")
     return fig
 
-def plot_pnl_graphs(orders_data, title):
-    all_paths = orders_summary('pnl', orders_data)
-    fig, ax = plt.subplots(1, 1, figsize=(6, 2))
-    for path in all_paths:
-        ax.plot(path, alpha=0.1, c='b')
-    ax.plot(np.array(all_paths).mean(axis=0), c='r')
-    ax.set_title(f"{title} PnL")
-    return fig
+def plot_holds(df):
+    plt.figure(figsize=(10, 5))
+    holds = df.groupby('sim_num').apply(lambda x: 100 * x.pnl.sum() / x.bet_amount.sum())
+    plt.plot(holds.index, holds.values)
+    plt.title("Hold Percentage by Simulation")
+    plt.xlabel("Simulation Number")
+    plt.ylabel("Hold %")
+    plt.grid(True)
+    return plt
 
 def orders_summary(field, orders_df):
     all_paths = []
@@ -110,8 +86,6 @@ def orders_summary(field, orders_df):
         all_paths.append(one_path.values)
     return all_paths
 
-
-
 def main():
     st.title("Market Simulation Analysis")
     sim_selection = st.sidebar.selectbox("Choose Simulation", list(simulations_config.keys()))
@@ -119,14 +93,6 @@ def main():
     if st.sidebar.button("Show Configuration"):
         st.json(config)  # Displays the config as JSON in the main panel
 
-    # Sliders to adjust configuration (non-functional for actual backend update)
-    st.sidebar.header("Adjust Parameters")
-    new_time_steps = st.sidebar.slider("Time Steps", 100, 5000, config['time_steps'])
-    new_num_paths = st.sidebar.slider("Number of Paths", 1, 100, config['num_paths'])
-    new_vig = st.sidebar.slider("Vig", 0.01, 0.10, config['vig'], step=0.01)
-    
-    if st.sidebar.button("Run Simulation with New Parameters"):
-        st.sidebar.write("need to trigger a new sim")
     # Sidebar 
     st.sidebar.header("Configuration")
     sim_name = st.sidebar.selectbox("Select Simulation", [
