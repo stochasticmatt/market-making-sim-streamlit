@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import altair as alt
 import matplotlib.pyplot as plt
+from simulations_config import simulations_config
 
 OVER_ID = 'over_9.5'
 UNDER_ID = 'under_9.5'
@@ -75,86 +76,41 @@ def plot_holds(df):
     plt.grid(True)
     return plt
 
-simulations_config = {
-    "baseline_no_mm_low_vig" : {
-        "market_type" : "STRIKEOUTS-PITCHER",
-        "time_steps": 1000,
-        "num_paths" : 50,
-        "true_price_jump_prob" : 0.01,
-        "sharps" : 0,
-        "squares" : 1.0,
-        "squares_buys" : 0.2,
-        "squares_sells" : 0.2,
-        "squares_noop" : 0.6,
-        "bet_mean" : 200,
-        "vig" : 0.01
-    },
-    "baseline_no_mm" : {
-        "market_type" : "STRIKEOUTS-PITCHER",
-        "time_steps": 1000,
-        "num_paths" : 50,
-        "true_price_jump_prob" : 0.01,
-        "sharps" : 0,
-        "squares" : 1.0,
-        "squares_buys" : 0.2,
-        "squares_sells" : 0.2,
-        "squares_noop" : 0.6,
-        "bet_mean" : 200,
-        "vig" : 0.03
-    },
-    "baseline_no_mm_more_buys" : {
-        "market_type" : "STRIKEOUTS-PITCHER",
-        "time_steps": 1000,
-        "num_paths" : 50,
-        "true_price_jump_prob" : 0.01,
-        "sharps" : 0,
-        "squares" : 1.0,
-        "squares_buys" : 0.3,
-        "squares_sells" : 0.1,
-        "squares_noop" : 0.6,
-        "bet_mean" : 200,
-        "vig" : 0.03
-    },
-    "baseline_no_mm_sharps" : {
-        "market_type" : "STRIKEOUTS-PITCHER",
-        "time_steps": 1000,
-        "num_paths" : 50,
-        "true_price_jump_prob" : 0.01,
-        "sharps" : 0.1,
-        "squares" : 0.9,
-        "squares_buys" : 0.2,
-        "squares_sells" : 0.2,
-        "squares_noop" : 0.6,
-        "bet_mean" : 200,
-        "vig" : 0.03
-    },
-    "baseline_no_mm_sharps_high_vig" : {
-        "market_type" : "STRIKEOUTS-PITCHER",
-        "time_steps": 1000,
-        "num_paths" : 50,
-        "true_price_jump_prob" : 0.01,
-        "sharps" : 0.1,
-        "squares" : 0.9,
-        "squares_buys" : 0.2,
-        "squares_sells" : 0.2,
-        "squares_noop" : 0.6,
-        "bet_mean" : 200,
-        "vig" : 0.06
-    },
-    "baseline_test" : {
-        "market_type" : "STRIKEOUTS-PITCHER",
-        "time_steps": 120,
-        "num_paths" : 2,
-        "true_price_jump_prob" : 0.01,
-        "sharps" : 0.1,
-        "squares" : 0.9,
-        "squares_buys" : 0.2,
-        "squares_sells" : 0.2,
-        "squares_noop" : 0.6,
-        "bet_mean" : 200,
-        "vig" : 0.03
-    }
-}
+def plot_volume_graphs(orders_data, title):
+    all_paths = orders_summary('bet_amount', orders_data)
+    fig, axs = plt.subplots(1, 2, figsize=(20, 3))
+    for path in all_paths:
+        axs[0].plot(path, alpha=0.1, c='b')
+        axs[1].plot(np.abs(path), alpha=0.1, c='b')
+    axs[0].plot(np.array(all_paths).mean(axis=0), c='r')
+    axs[0].set_title(f"{title} Inventory")
+    axs[1].plot(np.array(np.abs(all_paths)).mean(axis=0), c='r')
+    axs[1].set_title(f"{title} Volume Imbalance")
+    return fig
+
+def plot_pnl_graphs(orders_data, title):
+    all_paths = orders_summary('pnl', orders_data)
+    fig, ax = plt.subplots(1, 1, figsize=(6, 2))
+    for path in all_paths:
+        ax.plot(path, alpha=0.1, c='b')
+    ax.plot(np.array(all_paths).mean(axis=0), c='r')
+    ax.set_title(f"{title} PnL")
+    return fig
+
+def orders_summary(field, orders_df):
+    all_paths = []
+    for sim_num in orders_df.sim_num.unique():
+        buys_sells = pd.DataFrame([], index=orders_df.time_step.unique())
+        buys = orders_df[(orders_df.stock_id == OVER_ID) & (orders_df.sim_num == sim_num)].set_index('time_step')[[field]]
+        sells = orders_df[(orders_df.stock_id == UNDER_ID) & (orders_df.sim_num == sim_num)].set_index('time_step')[[field]]
+        buys_sells = buys_sells.join(buys, how='outer').join(sells, how='outer', rsuffix='_s').fillna(0)
+        if field in ['bet_amount', 'quantity']:
+            buys_sells[f'{field}_s'] *= -1
+        one_path = buys_sells.sum(axis=1).cumsum()
+        all_paths.append(one_path.values)
+    return all_paths
+
+
 
 def main():
     st.title("Market Simulation Analysis")
@@ -187,13 +143,12 @@ def main():
         st.subheader("Prices DataFrame")
         st.write(prices_df)
 
-    st.sidebar.subheader("Plots")
-    if st.sidebar.checkbox("Plot Cumulative Bets"):
-        fig = plot_cumulative_bets(orders_df)
+    if st.sidebar.checkbox("Plot P&L Graph"):
+        fig = plot_pnl_graphs(orders_df, sim_selection)
         st.pyplot(fig)
 
-    if st.sidebar.checkbox("Plot P&L"):
-        fig = plot_pnl(orders_df)
+    if st.sidebar.checkbox("Plot Volume Graphs"):
+        fig = plot_volume_graphs(orders_df, sim_selection)
         st.pyplot(fig)
 
     if st.sidebar.checkbox("Plot Holds"):

@@ -1,0 +1,80 @@
+simulations_config = {
+    "baseline_no_mm_low_vig" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0,
+        "squares" : 1.0,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.01
+    },
+    "baseline_no_mm" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0,
+        "squares" : 1.0,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    },
+    "baseline_no_mm_more_buys" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0,
+        "squares" : 1.0,
+        "squares_buys" : 0.3,
+        "squares_sells" : 0.1,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    },
+    "baseline_no_mm_sharps" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0.1,
+        "squares" : 0.9,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    },
+    "baseline_no_mm_sharps_high_vig" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0.1,
+        "squares" : 0.9,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.06
+    },
+    "baseline_test" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 120,
+        "num_paths" : 2,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0.1,
+        "squares" : 0.9,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    }
+}
