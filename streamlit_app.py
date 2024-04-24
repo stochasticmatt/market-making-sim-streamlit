@@ -75,14 +75,107 @@ def plot_holds(df):
     plt.grid(True)
     return plt
 
+simulations_config = {
+    "baseline_no_mm_low_vig" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0,
+        "squares" : 1.0,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.01
+    },
+    "baseline_no_mm" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0,
+        "squares" : 1.0,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    },
+    "baseline_no_mm_more_buys" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0,
+        "squares" : 1.0,
+        "squares_buys" : 0.3,
+        "squares_sells" : 0.1,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    },
+    "baseline_no_mm_sharps" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0.1,
+        "squares" : 0.9,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    },
+    "baseline_no_mm_sharps_high_vig" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 1000,
+        "num_paths" : 50,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0.1,
+        "squares" : 0.9,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.06
+    },
+    "baseline_test" : {
+        "market_type" : "STRIKEOUTS-PITCHER",
+        "time_steps": 120,
+        "num_paths" : 2,
+        "true_price_jump_prob" : 0.01,
+        "sharps" : 0.1,
+        "squares" : 0.9,
+        "squares_buys" : 0.2,
+        "squares_sells" : 0.2,
+        "squares_noop" : 0.6,
+        "bet_mean" : 200,
+        "vig" : 0.03
+    }
+}
+
 def main():
     st.title("Market Simulation Analysis")
+    sim_selection = st.sidebar.selectbox("Choose Simulation", list(simulations_config.keys()))
+    config = simulations_config[sim_selection]
+    if st.sidebar.button("Show Configuration"):
+        st.json(config)  # Displays the config as JSON in the main panel
 
+    # Sliders to adjust configuration (non-functional for actual backend update)
+    st.sidebar.header("Adjust Parameters")
+    new_time_steps = st.sidebar.slider("Time Steps", 100, 5000, config['time_steps'])
+    new_num_paths = st.sidebar.slider("Number of Paths", 1, 100, config['num_paths'])
+    new_vig = st.sidebar.slider("Vig", 0.01, 0.10, config['vig'], step=0.01)
+    
+    if st.sidebar.button("Run Simulation with New Parameters"):
+        st.sidebar.write("need to trigger a new sim")
     # Sidebar 
     st.sidebar.header("Configuration")
     sim_name = st.sidebar.selectbox("Select Simulation", [
         'baseline_no_mm_low_vig', 'baseline_no_mm', 'baseline_no_mm_more_buys', 
-        'baseline_no_mm_sharps', 'baseline_no_mm_sharps_high_vig'
+        'baseline_no_mm_sharps', 'baseline_no_mm_sharps_high_vig', 'baseline_test'
     ])
 
     orders_df, prices_df = load_data(sim_name)
