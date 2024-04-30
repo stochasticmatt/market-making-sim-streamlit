@@ -44,7 +44,7 @@ def load_data(sim_name):
     return orders_df, prices_df
 
 def plot_trade_count(df):
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(18, 5))  # Increased figure width
     trade_counts = df.groupby('time_step').size()
     ax.plot(trade_counts.index, trade_counts.values)
     ax.set_title("Trade Count Over Time")
@@ -55,19 +55,19 @@ def plot_trade_count(df):
 
 
 def plot_price_and_trades(prices_df, orders_df):
-    fig, ax = plt.subplots(figsize=(15, 8))
-    
+    fig, ax = plt.subplots(figsize=(18, 8))
+
     if 'true_price' not in prices_df.columns and 'close_price' in orders_df.columns:
         prices_df['true_price'] = orders_df.groupby('time_step')['close_price'].mean()
 
     if 'true_price' in prices_df.columns:
         ax.plot(prices_df['time_step'], prices_df['true_price'], label='True Price')
     
-    # Scatter for buys and sells
+    # Scatter for buys and sells with smaller marker size
     buys = orders_df[orders_df['stock_id'] == OVER_ID]
     sells = orders_df[orders_df['stock_id'] == UNDER_ID]
-    ax.scatter(buys['time_step'], buys['price'], color='green', label='Buys', marker='^')
-    ax.scatter(sells['time_step'], sells['price'], color='red', label='Sells', marker='v')
+    ax.scatter(buys['time_step'], buys['price'], color='green', label='Buys', marker='^', s=20)  # Smaller size
+    ax.scatter(sells['time_step'], sells['price'], color='red', label='Sells', marker='v', s=20)  # Smaller size
     
     ax.set_title("Price and Trades Over Time")
     ax.set_xlabel("Time Step")
@@ -75,6 +75,7 @@ def plot_price_and_trades(prices_df, orders_df):
     ax.legend()
     ax.grid(True)
     return fig
+
 
 def calculate_statistics(df):
     results = {
