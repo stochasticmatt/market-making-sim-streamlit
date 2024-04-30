@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from simulations_config import simulations_config
 
 OVER_ID = 'over_9.5'
@@ -41,6 +42,51 @@ def load_data(sim_name):
     orders_df['pnl'] = orders_df['bet_amount'] * orders_df['returns']
     
     return orders_df, prices_df
+
+def plot_trade_count(df):
+    trade_counts = df.groupby('time_step').size()
+    plt.figure(figsize=(10, 5))
+    sns.lineplot(data=trade_counts)
+    plt.title("Trade Count Over Time")
+    plt.xlabel("Time Step")
+    plt.ylabel("Number of Trades")
+    plt.grid(True)
+    plt.show()
+
+def plot_price_and_trades(prices_df, orders_df):
+    plt.figure(figsize=(15, 8))
+    # Plot true prices
+    sns.lineplot(data=prices_df, x='time_step', y='true_price', label='True Price')
+    
+    # Overlay market maker actions if data available
+    if 'mm_price' in prices_df.columns:
+        sns.lineplot(data=prices_df, x='time_step', y='mm_price', label='Market Maker Price')
+    
+    # Scatter for buys and sells
+    buys = orders_df[orders_df['action'] == 'buy']
+    sells = orders_df[orders_df['action'] == 'sell']
+    sharps = orders_df[orders_df['trader_type'] == 'sharp']
+    plt.scatter(buys['time_step'], buys['price'], color='green', label='Buys', marker='^')
+    plt.scatter(sells['time_step'], sells['price'], color='red', label='Sells', marker='v')
+    plt.scatter(sharps['time_step'], sharps['price'], color='blue', label='Sharps', marker='o')
+    
+    plt.title("Price and Trades Over Time")
+    plt.xlabel("Time Step")
+    plt.ylabel("Price")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+def calculate_statistics(df):
+    results = {
+        'Avg Profit': df['pnl'].mean(),
+        'Drawdown': min(df['pnl'].cumsum()),  # Assuming drawdown as the minimum cumulative PnL
+        'Avg Win': df[df['pnl'] > 0]['pnl'].mean(),
+        'Avg Lose': df[df['pnl'] < 0]['pnl'].mean(),
+        'Sharpe Ratio': df['pnl'].mean() / df['pnl'].std() * np.sqrt(len(df)),
+        'Hold %': 100 * df['pnl'].sum() / df['bet_amount'].sum()
+    }
+    return results
 
 def plot_pnl_graphs(orders_data, title):
     all_paths = orders_summary('pnl', orders_data)
