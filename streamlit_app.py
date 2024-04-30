@@ -44,7 +44,7 @@ def load_data(sim_name):
     return orders_df, prices_df
 
 def plot_trade_count(df):
-    fig, ax = plt.subplots(figsize=(18, 5))  # Increased figure width
+    fig, ax = plt.subplots(figsize=(18, 5)) 
     trade_counts = df.groupby('time_step').size()
     ax.plot(trade_counts.index, trade_counts.values)
     ax.set_title("Trade Count Over Time")
@@ -148,6 +148,11 @@ def main():
 
     orders_df, prices_df = load_data(sim_name)
 
+    # Slider to select specific simulation number
+    simulation_num = st.sidebar.slider("Select Simulation Number", 0, 49, 0)
+    filtered_orders = orders_df[orders_df['sim_num'] == simulation_num]
+    filtered_prices = prices_df[prices_df['sim_num'] == simulation_num]
+
     if st.sidebar.checkbox("Show DataFrames"):
         st.subheader("Orders DataFrame")
         st.write(orders_df)
@@ -167,11 +172,11 @@ def main():
         st.pyplot(fig)
 
     if st.sidebar.checkbox("Plot Trade Count"):
-        fig = plot_trade_count(orders_df)
+        fig = plot_trade_count(filtered_orders)
         st.pyplot(fig)
     
     if st.sidebar.checkbox("Plot Price and Trades"):
-        fig = plot_price_and_trades(prices_df, orders_df)
+        fig = plot_price_and_trades(filtered_prices, filtered_orders)
         st.pyplot(fig)
     
     if st.sidebar.checkbox("Show Statistics"):
