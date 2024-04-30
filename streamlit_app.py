@@ -58,7 +58,6 @@ def plot_price_and_trades(prices_df, orders_df):
     # Plot true prices
     sns.lineplot(data=prices_df, x='time_step', y='true_price', label='True Price')
     
-    # Overlay market maker actions if data available
     if 'mm_price' in prices_df.columns:
         sns.lineplot(data=prices_df, x='time_step', y='mm_price', label='Market Maker Price')
     
@@ -80,7 +79,7 @@ def plot_price_and_trades(prices_df, orders_df):
 def calculate_statistics(df):
     results = {
         'Avg Profit': df['pnl'].mean(),
-        'Drawdown': min(df['pnl'].cumsum()),  # Assuming drawdown as the minimum cumulative PnL
+        'Drawdown': min(df['pnl'].cumsum()),  
         'Avg Win': df[df['pnl'] > 0]['pnl'].mean(),
         'Avg Lose': df[df['pnl'] < 0]['pnl'].mean(),
         'Sharpe Ratio': df['pnl'].mean() / df['pnl'].std() * np.sqrt(len(df)),
@@ -148,7 +147,6 @@ def main():
 
     orders_df, prices_df = load_data(sim_name)
 
-    # display orders and prices DataFrames
     if st.sidebar.checkbox("Show DataFrames"):
         st.subheader("Orders DataFrame")
         st.write(orders_df)
@@ -166,6 +164,16 @@ def main():
     if st.sidebar.checkbox("Plot Holds"):
         fig = plot_holds(orders_df)
         st.pyplot(fig)
+
+    if st.sidebar.checkbox("Plot Trade Count"):
+        plot_trade_count(orders_df)
+    
+    if st.sidebar.checkbox("Plot Price and Trades"):
+        plot_price_and_trades(prices_df, orders_df)
+    
+    if st.sidebar.checkbox("Show Statistics"):
+        stats = calculate_statistics(orders_df)
+        st.write(stats)
 
 if __name__ == "__main__":
     main()
