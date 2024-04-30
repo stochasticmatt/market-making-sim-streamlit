@@ -44,30 +44,29 @@ def load_data(sim_name):
     return orders_df, prices_df
 
 def plot_trade_count(df):
-    trade_counts = df.groupby('time_step').size()
     plt.figure(figsize=(10, 5))
-    sns.lineplot(data=trade_counts)
+    trade_counts = df.groupby('time_step').size()
+    plt.plot(trade_counts.index, trade_counts.values)
     plt.title("Trade Count Over Time")
     plt.xlabel("Time Step")
     plt.ylabel("Number of Trades")
     plt.grid(True)
     plt.show()
 
+
 def plot_price_and_trades(prices_df, orders_df):
     plt.figure(figsize=(15, 8))
-    # Plot true prices
-    sns.lineplot(data=prices_df, x='time_step', y='true_price', label='True Price')
     
-    if 'mm_price' in prices_df.columns:
-        sns.lineplot(data=prices_df, x='time_step', y='mm_price', label='Market Maker Price')
+    if 'true_price' not in prices_df.columns and 'close_price' in orders_df.columns:
+        prices_df['true_price'] = orders_df.groupby('time_step')['close_price'].mean()  # Mean close price per time step
+
+    if 'true_price' in prices_df.columns:
+        plt.plot(prices_df['time_step'], prices_df['true_price'], label='True Price')
     
-    # Scatter for buys and sells
-    buys = orders_df[orders_df['action'] == 'buy']
-    sells = orders_df[orders_df['action'] == 'sell']
-    sharps = orders_df[orders_df['trader_type'] == 'sharp']
+    buys = orders_df[orders_df['stock_id'] == OVER_ID]
+    sells = orders_df[orders_df['stock_id'] == UNDER_ID]
     plt.scatter(buys['time_step'], buys['price'], color='green', label='Buys', marker='^')
     plt.scatter(sells['time_step'], sells['price'], color='red', label='Sells', marker='v')
-    plt.scatter(sharps['time_step'], sharps['price'], color='blue', label='Sharps', marker='o')
     
     plt.title("Price and Trades Over Time")
     plt.xlabel("Time Step")
@@ -79,7 +78,7 @@ def plot_price_and_trades(prices_df, orders_df):
 def calculate_statistics(df):
     results = {
         'Avg Profit': df['pnl'].mean(),
-        'Drawdown': min(df['pnl'].cumsum()),  
+        'Drawdown': df['pnl'].cumsum().min(),
         'Avg Win': df[df['pnl'] > 0]['pnl'].mean(),
         'Avg Lose': df[df['pnl'] < 0]['pnl'].mean(),
         'Sharpe Ratio': df['pnl'].mean() / df['pnl'].std() * np.sqrt(len(df)),
