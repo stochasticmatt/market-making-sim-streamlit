@@ -2,3 +2,5 @@ pandas
 altair
 streamlit
 numpy
+matplotlib
+matplotlib.pyplot
